@@ -1,0 +1,17 @@
+Photography Parallax Head Motorization
+=============
+
+This project controls stepper motors and a camera in order to take 360 deg.
+Panoramic Photographs automatically.
+
+Dependencies
+-------------
+
+The code controls an Arduino open source hardware Motorshield and requires
+the following libraries:
+
+- https://github.com/adafruit/Adafruit-Motor-Shield-library
+	git://github.com/adafruit/Adafruit-Motor-Shield-library.git
+
+- https://github.com/adafruit/AccelStepper
+	git://github.com/adafruit/AccelStepper.git
