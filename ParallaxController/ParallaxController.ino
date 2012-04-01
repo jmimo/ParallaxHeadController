@@ -41,6 +41,7 @@ void setup() {
     stepper.setMaxSpeed(100);
     stepper.setAcceleration(200);
     stepper.disableOutputs();
+    Serial.println("DEVICE IS READY");
 }
 
 void loop() {
