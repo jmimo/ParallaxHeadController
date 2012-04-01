@@ -11,7 +11,11 @@ The code controls an Arduino open source hardware Motorshield and requires
 the following libraries:
 
 - https://github.com/adafruit/Adafruit-Motor-Shield-library
-	git://github.com/adafruit/Adafruit-Motor-Shield-library.git
+<pre>
+git clone git://github.com/adafruit/Adafruit-Motor-Shield-library.git AFMotor
+</pre>
 
 - https://github.com/adafruit/AccelStepper
-	git://github.com/adafruit/AccelStepper.git
+<pre>
+git clone git://github.com/adafruit/AccelStepper.git AccelStepper
+</pre>
