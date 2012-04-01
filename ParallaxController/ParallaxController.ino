@@ -1,22 +1,42 @@
-#include <AccelStepper.h>
+/**
+ *
+ * Parallax Head Control Software
+ *
+ * Copyright 2012 Michael Mimo Moratti
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #include <AFMotor.h>
+#include <AccelStepper.h>
 
-const int KEY_ROTATE = 10;
-const int KEY_POWER  = 20;
-const int KEY_RESET  = 30;
+const int   KEY_ROTATE = 10;
+const int   KEY_POWER  = 20;
+const int   KEY_RESET  = 30;
 
-const int INPUT_ROTATE_CLOCKWISE        = 1;
-const int INPUT_ROTATE_COUNTERCLOCKWISE = 0;
-const int INPUT_POWER_ON                = 1;
-const int INPUT_POWER_OFF               = 0;
+const int   INPUT_ROTATE_CLOCKWISE        = 1;
+const int   INPUT_ROTATE_COUNTERCLOCKWISE = 0;
+const int   INPUT_POWER_ON                = 1;
+const int   INPUT_POWER_OFF               = 0;
 
-const int RESET_POSITION = 0;
+const int   RESET_POSITION = 0;
 
-const int MOTOR_STEPS         = 200;
-const float MOTOR_STEP_ANGLE  = 1.8;
-const int MOTOR_PORT          = 2;
-const int SERIAL_BAUD         = 9600;
-const int INPUT_STRING_SIZE   = 200;
+const int   MOTOR_STEPS         = 200;
+const float MOTOR_STEP_ANGLE    = 1.8;
+const int   MOTOR_PORT          = 2;
+const int   MOTOR_MAX_SPEED     = 20;
+const int   MOTOR_ACCELERATION  = 10;
+const int   SERIAL_BAUD         = 9600;
+const int   INPUT_STRING_SIZE   = 200;
 
 boolean stringComplete = false;
 String inputString = "";
@@ -38,10 +58,9 @@ void setup() {
     Serial.begin(SERIAL_BAUD);
     inputString.reserve(INPUT_STRING_SIZE);
     // initialize stepper
-    stepper.setMaxSpeed(100);
-    stepper.setAcceleration(200);
+    stepper.setMaxSpeed(MOTOR_MAX_SPEED);
+    stepper.setAcceleration(MOTOR_ACCELERATION);
     stepper.disableOutputs();
-    Serial.println("DEVICE IS READY");
 }
 
 void loop() {
