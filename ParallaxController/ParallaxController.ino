@@ -71,6 +71,10 @@ void loop() {
     sscanf(charBuf,"%d %d %d",&key,&input,&value);
     switch(key) {
       case KEY_ROTATE:
+        if(!powerOn) {
+          Serial.println("POWER IS OFF");
+          break;
+        }
         if(fmod(value,MOTOR_STEP_ANGLE) > 0) {
           value = value - fmod(value,MOTOR_STEP_ANGLE);
         }
