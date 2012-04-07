@@ -1,41 +1,37 @@
-{"command":"initialize","port":"2","total-steps":"200","step-angle":"1.8","max-speed":"20","acceleration":"10"}
-
-//const int   MOTOR_STEPS         = 200;
-//const float MOTOR_STEP_ANGLE    = 1.8;
-//const int   MOTOR_PORT          = 2;
-//const int   MOTOR_MAX_SPEED     = 20;
-//const int   MOTOR_ACCELERATION  = 10;
+{"command":"initialize","port":"2","total-steps":"200","step-angle":"1.80","max-speed":"20","acceleration":"10"}
+// make sure you always initialize the step-angle with a precision of 2 in order to avoid precision problems on arduino
+/ during floating point modulo operation!
 
 {"command":"power","toggle":"on"}
 {"command":"power","toggle":"off"}
 {"command":"rotate","direction":"clockwise","degrees":"36"}
 {"command":"reset"}
+
+-- LOG --
+
+{"status":"Motor initialization finished"}
+{"status":"Power is on"}
+{"degrees":"36.00","steps":"20","position":"20","status":"Rotation finished"}
+{"degrees":"36.00","steps":"20","position":"40","status":"Rotation finished"}
+{"degrees":"36.00","steps":"20","position":"60","status":"Rotation finished"}
+{"degrees":"36.00","steps":"20","position":"80","status":"Rotation finished"}
+{"degrees":"36.00","steps":"20","position":"100","status":"Rotation finished"}
+{"degrees":"36.00","steps":"20","position":"120","status":"Rotation finished"}
+{"status":"Position is reset to current position"}
+{"degrees":"36.00","steps":"20","position":"20","status":"Rotation finished"}
+{"degrees":"36.00","steps":"20","position":"40","status":"Rotation finished"}
+{"status":"Power is off"}
+
 -- ERRORS --
 
 {"command":"power","toggle":"o"}
 {"command":"rotate","direction":"clockwis","degrees":"180"}
 
-
-
-
-
-
-
-
+{"error":"The motor has not been initialized yet, please do so now!","status":"Error"}
 {"error":"The power toggle value was not understood","error-value":"o","status":"Error"}
 {"error":"The request could not be parsed","status":"Error"}
 {"error":"The rotation direction was not understood","error-value":"clockwis","status":"Error"}
 {"error":"The rotation degree value has to be greater 0","error-value":"0","status":"Error"}
-
-
-
--- LOG --
-
-{"status":"Power is on"}
-{"degrees":"36.00","steps":"20","position":"20","status":"Rotation finished"}
-{"status":"Position is reset to current position"}
-{"degrees":"36.00","steps":"20","position":"20","status":"Rotation finished"}
-{"status":"Power is off"}
 
 
 

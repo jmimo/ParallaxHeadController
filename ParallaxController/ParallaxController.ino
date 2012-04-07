@@ -176,7 +176,6 @@ void rotate(aJsonObject* request, aJsonObject* response) {
     stepAngle = stepAngle - fmod(stepAngle,motorStepAngle);
   }
   int steps = stepAngle / motorStepAngle;
-  Serial.println(steps);
   if(directionIndication == DIRECTION_CLOCKWISE) {
     steps=abs(steps);
   } else {
