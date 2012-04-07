@@ -19,3 +19,8 @@ git clone git://github.com/adafruit/Adafruit-Motor-Shield-library.git AFMotor
 <pre>
 git clone git://github.com/adafruit/AccelStepper.git AccelStepper
 </pre>
+
+- https://github.com/interactive-matter/aJson
+<pre>
+git clone git://github.com/interactive-matter/aJson.git aJSON
+</pre>
