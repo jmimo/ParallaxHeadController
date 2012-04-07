@@ -24,60 +24,60 @@
 const int SERIAL_BAUD = 9600;
 
 const int COMMAND_INITIALIZE = 10;
-const int COMMAND_ROTATE = 20;
-const int COMMAND_POWER = 30;
-const int COMMAND_RESET = 40;
-const int COMMAND_ERROR = 999;
+const int COMMAND_ROTATE     = 20;
+const int COMMAND_POWER      = 30;
+const int COMMAND_RESET      = 40;
+const int COMMAND_ERROR      = 999;
 
 const char* JSON_PARAMETER_COMMAND = "command";
 
 const String COMMAND_NAME_INITIALIZE = "initialize";
-const String COMMAND_NAME_ROTATE = "rotate";
-const String COMMAND_NAME_POWER = "power";
-const String COMMAND_NAME_RESET = "reset";
+const String COMMAND_NAME_ROTATE     = "rotate";
+const String COMMAND_NAME_POWER      = "power";
+const String COMMAND_NAME_RESET      = "reset";
 
 const char* JSON_PARAMETER_DIRECTION = "direction";
 
-const String DIRECTION_CLOCKWISE = "clockwise";
+const String DIRECTION_CLOCKWISE        = "clockwise";
 const String DIRECTION_COUNTERCLOCKWISE = "counterclockwise";
 
 const char* JSON_PARAMETER_DEGREES = "degrees";
-const char* JSON_PARAMETER_STEPS = "steps";
+const char* JSON_PARAMETER_STEPS   = "steps";
 
 const char* JSON_PARAMETER_TOGGLE = "toggle";
 
-const String TOGGLE_ON = "on";
+const String TOGGLE_ON  = "on";
 const String TOGGLE_OFF = "off";
 
 const char* JSON_PARAMETER_POSITION = "position";
-const char* JSON_PARAMETER_STATUS = "status";
+const char* JSON_PARAMETER_STATUS   = "status";
 
 const char* STATUS_INITIALIZATION_FINISHED = "Motor initialization finished";
-const char* STATUS_ROTATION_FINISHED = "Rotation finished";
-const char* STATUS_POWER_ON = "Power is on";
-const char* STATUS_POWER_OFF = "Power is off";
-const char* STATUS_RESET = "Position is reset to current position";
-const char* STATUS_ERROR = "Error";
+const char* STATUS_ROTATION_FINISHED       = "Rotation finished";
+const char* STATUS_POWER_ON                = "Power is on";
+const char* STATUS_POWER_OFF               = "Power is off";
+const char* STATUS_RESET                   = "Position is reset to current position";
+const char* STATUS_ERROR                   = "Error";
 
-const char* JSON_PARAMETER_ERROR = "error";
+const char* JSON_PARAMETER_ERROR       = "error";
 const char* JSON_PARAMETER_ERROR_VALUE = "error-value";
 
-const char* ERROR_MOTOR_IS_NOT_INITIALIZED = "The motor has not been initialized yet, please do so now!";
-const char* ERROR_MOTOR_PORT_WRONG = "Please specify a valid motor port value";
-const char* ERROR_MOTOR_TOTAL_STEPS_WRONG = "Please specify the total steps for the motor";
-const char* ERROR_MOTOR_STEP_ANGLE_WRONG = "Please specify a valid step angle for the motor";
-const char* ERROR_MOTOR_MAX_SPEED_WRONG = "Please specify a maximum speed value for the motor";
-const char* ERROR_MOTOR_ACCELERATION_WRONG = "Please specify a acceleration value for the motor";
+const char* ERROR_MOTOR_IS_NOT_INITIALIZED          = "The motor has not been initialized yet, please do so now!";
+const char* ERROR_MOTOR_PORT_WRONG                  = "Please specify a valid motor port value";
+const char* ERROR_MOTOR_TOTAL_STEPS_WRONG           = "Please specify the total steps for the motor";
+const char* ERROR_MOTOR_STEP_ANGLE_WRONG            = "Please specify a valid step angle for the motor";
+const char* ERROR_MOTOR_MAX_SPEED_WRONG             = "Please specify a maximum speed value for the motor";
+const char* ERROR_MOTOR_ACCELERATION_WRONG          = "Please specify a acceleration value for the motor";
 const char* ERROR_ROTATION_DIRECTION_NOT_UNDERSTOOD = "The rotation direction was not understood";
-const char* ERROR_ROTATION_DEGREE_VALUE_TOO_SMALL = "The rotation degree value has to be greater 0";
-const char* ERROR_ROTATION_POWER_IS_OFF = "Unable to rotate motor due to the power beeing of, please switch the power on first!";
+const char* ERROR_ROTATION_DEGREE_VALUE_TOO_SMALL   = "The rotation degree value has to be greater 0";
+const char* ERROR_ROTATION_POWER_IS_OFF             = "Unable to rotate motor due to the power beeing of, please switch the power on first!";
 const char* ERROR_POWER_TOGGLE_VALUE_NOT_UNDERSTOOD = "The power toggle value was not understood";
-const char* ERROR_REQUEST_NOT_UNDERSTOOD = "The request could not be parsed";
+const char* ERROR_REQUEST_NOT_UNDERSTOOD            = "The request could not be parsed";
 
-const char* JSON_PARAMETER_MOTOR_PORT = "port";
-const char* JSON_PARAMETER_MOTOR_TOTAL_STEPS = "total-steps";
-const char* JSON_PARAMETER_MOTOR_STEP_ANGLE = "step-angle";
-const char* JSON_PARAMETER_MOTOR_MAX_SPEED = "max-speed";
+const char* JSON_PARAMETER_MOTOR_PORT         = "port";
+const char* JSON_PARAMETER_MOTOR_TOTAL_STEPS  = "total-steps";
+const char* JSON_PARAMETER_MOTOR_STEP_ANGLE   = "step-angle";
+const char* JSON_PARAMETER_MOTOR_MAX_SPEED    = "max-speed";
 const char* JSON_PARAMETER_MOTOR_ACCELERATION = "acceleration";
 
 const int   RESET_POSITION = 0;
@@ -91,10 +91,16 @@ AccelStepper stepper;
 float motorStepAngle;
 boolean isMotorInitialized = false;
 
+/**
+ * Setup method invoked by Arduino
+ */
 void setup() {
   Serial.begin(SERIAL_BAUD);
 }
 
+/**
+ * Loop method, invoked by Arduino
+ */
 void loop() {
   if(isInputComplete) {
     char data[inputData.length()];
@@ -113,6 +119,9 @@ void loop() {
   }
 }
 
+/**
+ * This method is invoked whenever serial input is ready.
+ */
 void serialEvent() {
   while(Serial.available()) {
     char inChar = (char)Serial.read();
@@ -123,6 +132,9 @@ void serialEvent() {
   }
 }
 
+/**
+ * invokes a command, has to be executed after the validation method.
+ */
 void executeCommand(aJsonObject* request, aJsonObject* response) {
   int command = validateInput(request,response);
   switch(command) {
@@ -147,6 +159,16 @@ void executeCommand(aJsonObject* request, aJsonObject* response) {
   }
 }
 
+/**
+ * Initialized the Stepper motor.
+ * This method will initialize the motor port, steps, speed, acceleration and angle steps.
+ * It allows to add any type of stepper motor to the interface and use it controlled by the software talking ot Arduino.
+ * This method is the first required step to use this motor controller.
+ * 
+ * request: {"command":"initialize","port":"2","total-steps":"200","step-angle":"1.80","max-speed":"20","acceleration":"10"}
+ * response: {"status":"Motor initialization finished"}
+ *
+ */
 void initialize(aJsonObject* request, aJsonObject* response) {
   motor = AF_Stepper(atoi(getJsonParameter(request,JSON_PARAMETER_MOTOR_TOTAL_STEPS)),atoi(getJsonParameter(request,JSON_PARAMETER_MOTOR_PORT)));
   stepper = AccelStepper(forwardstep,backwardstep);
@@ -157,13 +179,31 @@ void initialize(aJsonObject* request, aJsonObject* response) {
   addJsonParameter(response,JSON_PARAMETER_STATUS,STATUS_INITIALIZATION_FINISHED);
 }
 
+/**
+ * Defines a single forward step for the stepper motor.
+ */
 void forwardstep() {  
   motor.onestep(FORWARD,DOUBLE);
 }
+
+/**
+ * Defines a single backward step for the stepper motor.
+ */
 void backwardstep() {  
   motor.onestep(BACKWARD,DOUBLE);
 }
 
+/**
+ * Invokes a defined amount of steps towards the motor.
+ * The steps are input as degrees. The are then analyzed 
+ * with a modulo function and rounded to the next possible
+ * amount of steps closest to the required amount of degrees.
+ * It will always be a pessimistic rounding effort!
+ *
+ * request: {"command":"rotate","direction":"clockwise","degrees":"36"}
+ * response: {"degrees":"36.00","steps":"20","position":"20","status":"Rotation finished"}
+ *
+ */
 void rotate(aJsonObject* request, aJsonObject* response) {
   if(!isPowerOn) {
     addJsonParameter(response,JSON_PARAMETER_ERROR,ERROR_ROTATION_POWER_IS_OFF);
@@ -194,6 +234,13 @@ void rotate(aJsonObject* request, aJsonObject* response) {
   addJsonParameter(response,JSON_PARAMETER_STATUS,STATUS_ROTATION_FINISHED);
 }
 
+/**
+ * With power the hodling torque of the motor is either switched on or off.
+ *
+ * request: {"command":"power","toggle":"on"}
+ * response: {"status":"Power is on"} / {"status":"Power is off"}
+ *
+ */
 void power(aJsonObject* request, aJsonObject* response) {
   String powerToggle = getJsonParameter(request,JSON_PARAMETER_TOGGLE);
   if(powerToggle == TOGGLE_ON) {
@@ -209,11 +256,22 @@ void power(aJsonObject* request, aJsonObject* response) {
   }
 }
 
+/**
+ * Resets the current position in steps of the motor to 0;
+ * This method allows to adjust the motor manually and then reset the internal position.
+ *
+ * request: {"command":"reset"}
+ * response: {"status":"Position is reset to current position"}
+ *
+ */
 void reset(aJsonObject* request, aJsonObject* response) {
   stepper.setCurrentPosition(RESET_POSITION);
   addJsonParameter(response,JSON_PARAMETER_STATUS,STATUS_RESET);
 }
 
+/**
+ * Request input validation. If an error is found it will be reported back to the user.
+ */
 int validateInput(aJsonObject* request, aJsonObject* response) {
   if(request) {
     String commandString = getJsonParameter(request,JSON_PARAMETER_COMMAND);
@@ -268,10 +326,16 @@ int validateInput(aJsonObject* request, aJsonObject* response) {
   return COMMAND_ERROR;
 }
 
+/**
+ * Wrapper method for adding a JSON parameter.
+ */
 char* getJsonParameter(aJsonObject* item,const char* parameter) {
   return aJson.getObjectItem(item,parameter)->valuestring;
 }
 
+/**
+ * Wrapper method for reading a JSON parameter.
+ */
 void addJsonParameter(aJsonObject* item,const char* parameter, const char* value) {
   aJson.addItemToObject(item,parameter,aJson.createItem(value));
 }
