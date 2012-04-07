@@ -1,0 +1,34 @@
+{"command":"power","toggle":"on"}
+{"command":"power","toggle":"off"}
+{"command":"rotate","direction":"clockwise","degrees":"36"}
+{"command":"reset"}
+-- ERRORS --
+
+{"command":"power","toggle":"o"}
+{"command":"rotate","direction":"clockwis","degrees":"180"}
+
+
+
+
+
+
+
+
+{"error":"The power toggle value was not understood","error-value":"o","status":"Error"}
+{"error":"The request could not be parsed","status":"Error"}
+{"error":"The rotation direction was not understood","error-value":"clockwis","status":"Error"}
+{"error":"The rotation degree value has to be greater 0","error-value":"0","status":"Error"}
+
+
+
+-- LOG --
+
+{"status":"Power is on"}
+{"degrees":"36.00","steps":"20","position":"20","status":"Rotation finished"}
+{"status":"Position is reset to current position"}
+{"degrees":"36.00","steps":"20","position":"20","status":"Rotation finished"}
+{"status":"Power is off"}
+
+
+
+

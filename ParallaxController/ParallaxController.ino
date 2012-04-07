@@ -22,7 +22,6 @@
 #include <aJSON.h>
 
 const int SERIAL_BAUD = 9600;
-const int   INPUT_STRING_SIZE   = 400;
 
 const int COMMAND_ROTATE = 10;
 const int COMMAND_POWER = 20;
@@ -54,7 +53,7 @@ const char* JSON_PARAMETER_STATUS = "status";
 const char* STATUS_ROTATION_FINISHED = "Rotation finished";
 const char* STATUS_POWER_ON = "Power is on";
 const char* STATUS_POWER_OFF = "Power is off";
-const char* STATUS_RESET = "Position is reset to 0";
+const char* STATUS_RESET = "Position is reset to current position";
 const char* STATUS_ERROR = "Error";
 
 const char* JSON_PARAMETER_ERROR = "error";
@@ -74,7 +73,7 @@ const int   MOTOR_ACCELERATION  = 10;
 
 const int   RESET_POSITION = 0;
 
-boolean inputComplete = false;
+boolean isInputComplete = false;
 String inputData = "";
 boolean isPowerOn = false;
 
@@ -82,7 +81,6 @@ boolean isPowerOn = false;
 
 void initializeCommunications() {
   Serial.begin(SERIAL_BAUD);
-  inputData.reserve(INPUT_STRING_SIZE);
 }
 
 // Motor Initialization
@@ -101,31 +99,30 @@ AccelStepper stepper(forwardstep,backwardstep);
 void initializeStepper() {
     stepper.setMaxSpeed(MOTOR_MAX_SPEED);
     stepper.setAcceleration(MOTOR_ACCELERATION);
-    stepper.disableOutputs();
 }
 
 // Program Setup
 
 void setup() {
-  initializeCommunications();
   initializeStepper();
+  initializeCommunications();
 }
 
 void loop() {
-  if(inputComplete) {
-    char charBuf[INPUT_STRING_SIZE];
-    inputData.toCharArray(charBuf,INPUT_STRING_SIZE);
-    aJsonObject* request = aJson.parse(charBuf);
+  if(isInputComplete) {
+    char data[inputData.length()];
+    inputData.toCharArray(data,inputData.length());
+    aJsonObject* request = aJson.parse(data);
     aJsonObject* response = aJson.createObject();
     executeCommand(request,response);
     Serial.println(aJson.print(response));
     aJson.deleteItem(request);
     aJson.deleteItem(response);
     inputData = "";
-    inputComplete = false;
-  }
-  if(isPowerOn) {
-    stepper.run();
+    isInputComplete = false;
+    if(isPowerOn) {
+      stepper.run();
+    }  
   }
 }
 
@@ -133,9 +130,8 @@ void serialEvent() {
   while(Serial.available()) {
     char inChar = (char)Serial.read();
     inputData += inChar;
-    // TODO consider more sturdy mechanism to understand begining and end of JSON message
     if(inChar == '\n') {
-      inputComplete = true;
+      isInputComplete = true;
     }
   }
 }
