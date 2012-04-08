@@ -57,8 +57,8 @@ def main():
 	if(options.device is None):
 		parser.error("Please specify a valid device to connect too.")
 	
-	shoot("18",["1/250","1/500","1/1000"])
-	return
+	#shoot("18",["1/250","1/500","1/1000"])
+	#`return
 	
 	arduino = Arduino(options.device,options.baudrate,4)
 	arduino.connect()
@@ -66,26 +66,12 @@ def main():
 	try:
 		initialize(arduino,options.motorPort,options.motorSteps,options.motorStepAngle,options.motorMaximumSpeed,options.motorAcceleration)
 		powerToggle(arduino,POWER_TOGGLE_ON)
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
-		rotate(arduino,"clockwise","36")
-		shoot("18",["1/250","1/500","1/1000"])
+		amount = 10
+		counter = 0
+		while(counter < amount):
+			shoot("10",["1/250","1/500","1/1000"])
+			rotate(arduino,"clockwise","36")
+			counter = counter + 1
 		powerToggle(arduino,POWER_TOGGLE_OFF)
 	except ArduinoCommandExecutionException as e:
 		sys.stderr.write("Error occured: %s \n" % (e))
@@ -101,12 +87,13 @@ def main():
 
 def shoot(aperture, shutterspeed):
 	for speed in shutterspeed:
-		takeImage(aperture,speed)
+		captureImage(aperture,speed)
 	time.sleep(2)
 	
-def takeImage(aperture, shutterspeed):
+def captureImage(aperture, shutterspeed):
 	try:
-		subprocess.check_call(["gphoto2","--set-config","/main/capturesettings/aperture=" + aperture,"--set-config","/main/capturesettings/shutterspeed=" + shutterspeed,"--capture-image"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+		subprocess.check_call(["gphoto2","--set-config","capturetarget=1","--set-config","/main/capturesettings/aperture=" + aperture,"--set-config","/main/capturesettings/shutterspeed=" + shutterspeed,"--capture-image"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+		sys.stdout.write("image captured with aperture: %s and shutterspeed: %s \n" % (aperture,shutterspeed))
 	except subprocess.CalledProcessError as e:
 		sys.stderr.write("Error occured while attempting to take image: %s \n" % (e))
 
