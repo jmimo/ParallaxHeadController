@@ -57,6 +57,8 @@ def main():
 	if(options.device is None):
 		parser.error("Please specify a valid device to connect too.")
 	
+	shoot("18",["1/250","1/500","1/1000"])
+	return
 	
 	arduino = Arduino(options.device,options.baudrate,4)
 	arduino.connect()
@@ -65,25 +67,25 @@ def main():
 		initialize(arduino,options.motorPort,options.motorSteps,options.motorStepAngle,options.motorMaximumSpeed,options.motorAcceleration)
 		powerToggle(arduino,POWER_TOGGLE_ON)
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		rotate(arduino,"clockwise","36")
-		shoot()
+		shoot("18",["1/250","1/500","1/1000"])
 		powerToggle(arduino,POWER_TOGGLE_OFF)
 	except ArduinoCommandExecutionException as e:
 		sys.stderr.write("Error occured: %s \n" % (e))
@@ -97,9 +99,16 @@ def main():
 #	except subprocess.CalledProcessError as e:
 #		sys.stderr.write("Error occured while attempting to take image: %s \n" % (e))
 
-def shoot():
-	sys.stdout.write("taking image \n")
+def shoot(aperture, shutterspeed):
+	for speed in shutterspeed:
+		takeImage(aperture,speed)
 	time.sleep(2)
+	
+def takeImage(aperture, shutterspeed):
+	try:
+		subprocess.check_call(["gphoto2","--set-config","/main/capturesettings/aperture=" + aperture,"--set-config","/main/capturesettings/shutterspeed=" + shutterspeed,"--capture-image"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+	except subprocess.CalledProcessError as e:
+		sys.stderr.write("Error occured while attempting to take image: %s \n" % (e))
 
 def initialize(arduino, motorPort, motorSteps, motorStepAngle, motorSpeed, motorAcceleration):
 	request = json.dumps({"command":"initialize","port":motorPort,"total-steps":motorSteps,"step-angle":motorStepAngle,"max-speed":motorSpeed,"acceleration":motorAcceleration})
