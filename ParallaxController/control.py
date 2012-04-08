@@ -58,37 +58,48 @@ def main():
 		parser.error("Please specify a valid device to connect too.")
 	
 	
-	#takePicture()
-	#sendCommand()
-	
 	arduino = Arduino(options.device,options.baudrate,4)
 	arduino.connect()
 	
-	initialize(arduino,options.motorPort,options.motorSteps,options.motorStepAngle,options.motorMaximumSpeed,options.motorAcceleration)
-	powerToggle(arduino,POWER_TOGGLE_ON)
-	rotate(arduino,"clockwise","36")
-	rotate(arduino,"clockwise","36")
-	rotate(arduino,"clockwise","36")
-	rotate(arduino,"clockwise","36")
-	rotate(arduino,"clockwise","36")
-	rotate(arduino,"clockwise","36")
-	rotate(arduino,"clockwise","36")
-	rotate(arduino,"clockwise","36")
-	rotate(arduino,"clockwise","36")
-	rotate(arduino,"clockwise","36")
-	powerToggle(arduino,POWER_TOGGLE_OFF)
+	try:
+		initialize(arduino,options.motorPort,options.motorSteps,options.motorStepAngle,options.motorMaximumSpeed,options.motorAcceleration)
+		powerToggle(arduino,POWER_TOGGLE_ON)
+		rotate(arduino,"clockwise","36")
+		shoot()
+		rotate(arduino,"clockwise","36")
+		shoot()
+		rotate(arduino,"clockwise","36")
+		shoot()
+		rotate(arduino,"clockwise","36")
+		shoot()
+		rotate(arduino,"clockwise","36")
+		shoot()
+		rotate(arduino,"clockwise","36")
+		shoot()
+		rotate(arduino,"clockwise","36")
+		shoot()
+		rotate(arduino,"clockwise","36")
+		shoot()
+		rotate(arduino,"clockwise","36")
+		shoot()
+		rotate(arduino,"clockwise","36")
+		shoot()
+		powerToggle(arduino,POWER_TOGGLE_OFF)
+	except ArduinoCommandExecutionException as e:
+		sys.stderr.write("Error occured: %s \n" % (e))
 	
 	arduino.disconnect()
 	
 #----------------------------------------------------------------------
-def takePicture():
-	try:
-		subprocess.check_call(["gphoto2","-v"])
-	except subprocess.CalledProcessError as e:
-		sys.stderr.write("Error occured while attempting to take image!" % (e))
-		#print ("Error occured while attempting to take image!")
-		#print (type(e))
-		#print (e)
+#def takePicture():
+#	try:
+#		subprocess.check_call(["gphoto2","-v"])
+#	except subprocess.CalledProcessError as e:
+#		sys.stderr.write("Error occured while attempting to take image: %s \n" % (e))
+
+def shoot():
+	sys.stdout.write("taking image \n")
+	time.sleep(2)
 
 def initialize(arduino, motorPort, motorSteps, motorStepAngle, motorSpeed, motorAcceleration):
 	request = json.dumps({"command":"initialize","port":motorPort,"total-steps":motorSteps,"step-angle":motorStepAngle,"max-speed":motorSpeed,"acceleration":motorAcceleration})
@@ -100,18 +111,17 @@ def powerToggle(arduino, status):
 def rotate(arduino, direction, degrees):
 	request = json.dumps({"command":"rotate","direction":direction,"degrees":degrees})
 	send(arduino,request)
-	time.sleep(2)
 	
 def send(arduino, command):
-	#arduino = Arduino(device,baudrate,timeout)
-	#arduino.connect()
-	sys.stdout.write(command + '\n')
+	#sys.stdout.write(command + '\n')
 	response = arduino.sendCommand(command)
-	sys.stdout.write(response + '\n')
-	#arduino.disconnect()
+	#sys.stdout.write(response + '\n')
 	responseObject = json.loads(response)
-	sys.stdout.write(responseObject["status"] + DEFAULT_EOF)
-	# TODO throw exception in case of error	
+	#sys.stdout.write(responseObject["status"] + DEFAULT_EOF)
+	if(responseObject["status"] == "Error"):
+		raise ArduinoCommandExecutionException(responseObject["error"])
+	else:
+		sys.stdout.write(responseObject["status"] + '\n')
 
 #
 # Arduino communciations class
@@ -154,6 +164,16 @@ class Arduino(threading.Thread):
 		while (self.hasReceivedResponse == False):
 			time.sleep(0.001)
 		return self.response.decode(DEFAULT_ENCODING)
+
+
+#
+# Arduino communications Exception
+#
+class ArduinoCommandExecutionException(Exception):
+	def __init__(self, value):
+		self.value = value
+	def __str__(self):
+		return repr(self.value)
 
 #----------------------------------------------------------------------
 if __name__ == "__main__":
