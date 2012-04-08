@@ -79,21 +79,18 @@ def main():
 	arduino.disconnect()
 	
 #----------------------------------------------------------------------
-#def takePicture():
-#	try:
-#		subprocess.check_call(["gphoto2","-v"])
-#	except subprocess.CalledProcessError as e:
-#		sys.stderr.write("Error occured while attempting to take image: %s \n" % (e))
 
 def shoot(aperture, shutterspeed):
 	for speed in shutterspeed:
 		captureImage(aperture,speed)
-	time.sleep(2)
 	
 def captureImage(aperture, shutterspeed):
 	try:
+		start = time.strftime('%s')
 		subprocess.check_call(["gphoto2","--set-config","capturetarget=1","--set-config","/main/capturesettings/aperture=" + aperture,"--set-config","/main/capturesettings/shutterspeed=" + shutterspeed,"--capture-image"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-		sys.stdout.write("image captured with aperture: %s and shutterspeed: %s \n" % (aperture,shutterspeed))
+		end = time.strftime('%s')
+		total = int(end) - int(start)
+		sys.stdout.write("image captured with aperture: %s and shutterspeed: %s time used: %s sec. \n" % (aperture,shutterspeed,total))
 	except subprocess.CalledProcessError as e:
 		sys.stderr.write("Error occured while attempting to take image: %s \n" % (e))
 
