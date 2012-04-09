@@ -27,7 +27,7 @@ def main():
 		print("The choosen amount of degrees are not valid, Please choose any number which wraps around 360!")
 		return
 	
-	arduino = Arduino(options.device,options.baudrate,4)
+	arduino = Arduino(results.device,results.baudrate,4)
 	arduino.connect()
 	
 	try:
