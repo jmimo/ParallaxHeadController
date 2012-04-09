@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 
-import sys, subprocess, serial, json, threading, time
+import sys, subprocess, serial, json, threading, time, argparse
 
 DEFAULT_BAUDRATE = 9600
 DEFAULT_ENCODING = 'UTF-8'
-DEFAULT_EOF = '\n'
+DEFAULT_LF = '\n'
+
+JSON_ATTRIBUTE_STATUS = "status";
+JSON_ATTRIBUTE_ERROR = "error";
+
+STATUS_ERROR_VALUE = "Error";
 
 POWER_TOGGLE_ON = "on"
 POWER_TOGGLE_OFF = "off"
@@ -12,69 +17,31 @@ POWER_TOGGLE_OFF = "off"
 
 #----------------------------------------------------------------------
 def main():
-	import optparse
+	results = setupArgumentParser()
 	
-	parser = optparse.OptionParser(
-		usage = "%prog [options] [device [baoudrate]]",
-		description = "Controller program for the orchestration between Arduino and gphoto2")
-		
-	parser.add_option("-d", "--device",
-		dest = "device",
-		help = "device, the device (tty.*) at which the Arduino is attached")
-		
-	parser.add_option("-b", "--baudrate",
-		dest = "baudrate",
-		help = "set baud rate, default %default",
-		default = DEFAULT_BAUDRATE)
-		
-	parser.add_option("-p", "--motorPort",
-		dest = "motorPort",
-		help = "set the motor port on the shield, default %default",
-		default = "2")
-		
-	parser.add_option("-s", "--motorSteps",
-		dest = "motorSteps",
-		help = "set the motor's steps for a full rotation, default %default",
-		default = "200")
-		
-	parser.add_option("-a", "--motorStepAngle",
-		dest = "motorStepAngle",
-		help = "set the motor's step angle in degrees for one step, default %default",
-		default = "1.80")
-		
-	parser.add_option("-m", "--motorMaximumSpeed",
-		dest = "motorMaximumSpeed",
-		help = "set the motor's maximum speed, default %default",
-		default = "20")
-		
-	parser.add_option("-c", "--motorAcceleration",
-		dest = "motorAcceleration",
-		help = "set the motor's acceleration, default %default",
-		default = "10")
-		
-	(options, args) = parser.parse_args()
+	if((results.direction != "clockwise") & (results.direction != "counterclockwise")):
+		print("The rotation direction can either by [clockwise] or [counterclockwise]")
+		return
 	
-	if(options.device is None):
-		parser.error("Please specify a valid device to connect too.")
-	
-	#shoot("18",["1/250","1/500","1/1000"])
-	#`return
+	if(divmod(360,int(results.degrees))[1] > 0):
+		print("The choosen amount of degrees are not valid, Please choose any number which wraps around 360!")
+		return
 	
 	arduino = Arduino(options.device,options.baudrate,4)
 	arduino.connect()
 	
 	try:
-		initialize(arduino,options.motorPort,options.motorSteps,options.motorStepAngle,options.motorMaximumSpeed,options.motorAcceleration)
+		initialize(arduino,results.shieldport,results.steps,results.stepangle,results.maxspeed,results.acceleration)
 		powerToggle(arduino,POWER_TOGGLE_ON)
-		amount = 10
+		steps = divmod(360,int(results.degrees))[0]
 		counter = 0
-		while(counter < amount):
-			shoot("10",["1/250","1/500","1/1000"])
-			rotate(arduino,"clockwise","36")
+		while(counter < steps):
+			shoot(results.aperture,results.shutterspeed)
+			rotate(arduino,results.direction,results.degrees)
 			counter = counter + 1
 		powerToggle(arduino,POWER_TOGGLE_OFF)
 	except ArduinoCommandExecutionException as e:
-		sys.stderr.write("Error occured: %s \n" % (e))
+		print("Error occured: %s \n" % (e))
 	
 	arduino.disconnect()
 	
@@ -92,7 +59,7 @@ def captureImage(aperture, shutterspeed):
 		total = int(end) - int(start)
 		sys.stdout.write("image captured with aperture: %s and shutterspeed: %s time used: %s sec. \n" % (aperture,shutterspeed,total))
 	except subprocess.CalledProcessError as e:
-		sys.stderr.write("Error occured while attempting to take image: %s \n" % (e))
+		print("Error occured while attempting to take image: %s \n" % (e))
 
 def initialize(arduino, motorPort, motorSteps, motorStepAngle, motorSpeed, motorAcceleration):
 	request = json.dumps({"command":"initialize","port":motorPort,"total-steps":motorSteps,"step-angle":motorStepAngle,"max-speed":motorSpeed,"acceleration":motorAcceleration})
@@ -106,15 +73,12 @@ def rotate(arduino, direction, degrees):
 	send(arduino,request)
 	
 def send(arduino, command):
-	#sys.stdout.write(command + '\n')
-	response = arduino.sendCommand(command)
-	#sys.stdout.write(response + '\n')
+	response = arduino.send(command)
 	responseObject = json.loads(response)
-	#sys.stdout.write(responseObject["status"] + DEFAULT_EOF)
-	if(responseObject["status"] == "Error"):
-		raise ArduinoCommandExecutionException(responseObject["error"])
+	if(responseObject[JSON_ATTRIBUTE_STATUS] == STATUS_ERROR_VALUE):
+		raise ArduinoCommandExecutionException(responseObject[JSON_ATTRIBUTE_ERROR])
 	else:
-		sys.stdout.write(responseObject["status"] + '\n')
+		sys.stdout.write(responseObject[JSON_ATTRIBUTE_STATUS] + DEFAULT_LF)
 
 #
 # Arduino communciations class
@@ -142,7 +106,7 @@ class Arduino(threading.Thread):
 		try:
 			self.port = serial.Serial(self.device,self.baudrate,timeout=self.timeout)
 		except serial.serialutil.SerialException:
-			sys.stderr.write("The communication port is already in use\n")
+			print("The communication port is already in use\n")
 		self.start()
 		time.sleep(1)
 	
@@ -150,9 +114,9 @@ class Arduino(threading.Thread):
 		self.stopProcessing = True
 		self.port.close()
 	
-	def sendCommand(self, command):
+	def send(self, command):
 		self.hasReceivedResponse = False
-		self.port.write(command.encode(DEFAULT_ENCODING) + DEFAULT_EOF.encode(DEFAULT_ENCODING))
+		self.port.write(command.encode(DEFAULT_ENCODING) + DEFAULT_LF.encode(DEFAULT_ENCODING))
 		self.port.flush()
 		while (self.hasReceivedResponse == False):
 			time.sleep(0.001)
@@ -167,6 +131,68 @@ class ArduinoCommandExecutionException(Exception):
 		self.value = value
 	def __str__(self):
 		return repr(self.value)
+
+#----------------------------------------------------------------------
+def setupArgumentParser():
+	parser = argparse.ArgumentParser(description="Arduino Parallax Motor Controller Script")
+	
+	# ---- communication arguments ----
+	
+	communication = parser.add_argument_group("communication arguments")
+	
+	communication.add_argument("--device",required=True,
+		help="USB device where the Arduino is listening, normally found at /dev/tty.usbmodem*")
+		
+	communication.add_argument("--baudrate",required=False,
+		default="9600",
+		help="RX/TX Baudrate")
+		
+	# ---- rotation arguments ----
+	
+	rotation = parser.add_argument_group("rotation arguments")
+	
+	rotation.add_argument("--direction",required=True,
+		help = "Rotation direction, clockwise or counterclockwise")
+	
+	rotation.add_argument("--degrees",required=True,
+		help = "Degrees per rotation step")
+	
+	# ---- image arguments ----
+	
+	image = parser.add_argument_group("image arguments")
+	
+	image.add_argument("--aperture",required=True,
+		help = "the aperture to be used for all exposures")
+	
+	image.add_argument("--shutterspeed",required=True,
+		action = "append",
+		help = "List of shutterspeeds to execute in the given order")
+	
+	# ---- motor arguments ----
+	
+	motor = parser.add_argument_group("motor arguments")
+	
+	motor.add_argument("--shieldport",required=False,
+		default="2",
+		help = "The output port on the Arduino Motor Shield.")
+	
+	motor.add_argument("--steps",required=False,
+		default="200",
+		help = "The total amount of steps for one full 360 deg. rotation")	
+		
+	motor.add_argument("--stepangle",required=False,
+		default="1.80",
+		help = "The degrees for one Step.")	
+		
+	motor.add_argument("--maxspeed",required=False,
+		default="20",
+		help = "Maximum speed for the motor")
+		
+	motor.add_argument("--acceleration",required=False,
+		default="10",
+		help = "Rotation acceleration")
+	
+	return parser.parse_args()
 
 #----------------------------------------------------------------------
 if __name__ == "__main__":
