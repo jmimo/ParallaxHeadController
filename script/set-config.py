@@ -6,6 +6,16 @@ GP_OK = 0
 GP_CAPTURE_IMAGE = 0
 GP_FILE_TYPE_NORMAL = 1
 
+GP_WIDGET_WINDOW = 0  # Window widget This is the toplevel configuration widget. It should likely contain multiple GP_WIDGET_SECTION entries.
+GP_WIDGET_SECTION = 1 # Section widget (think Tab).
+GP_WIDGET_TEXT = 2    # Text widget.
+GP_WIDGET_RANGE = 3   # Slider widget.
+GP_WIDGET_TOGGLE = 4  # Toggle widget (think check box).
+GP_WIDGET_RADIO = 5   # Radio button widget.
+GP_WIDGET_MENU = 6    # Menu widget (same as RADIO).
+GP_WIDGET_BUTTON = 7  # Button press widget.
+GP_WIDGET_DATE = 8    # Date entering widget.
+
 gp = ctypes.CDLL('/usr/lib/libgphoto2.so.2')
 
 class CameraFilePath(ctypes.Structure):
@@ -53,6 +63,35 @@ def setConfig(name, value):
 	child.set_value(value)
 	check(gp.gp_camera_set_config(camera,main._w,context))
 
+def getWidgetName(widget):
+	name = ctypes.c_char_p()
+        gp.gp_widget_get_name(widget._w, PTR(name))
+        return name.value
+
+def getWidgetType(widget):
+        type = ctypes.c_int()
+        gp.gp_widget_get_type(widget._w, PTR(type))
+        return type.value
+
+def getWidgetValue(widget):
+        value = ctypes.c_void_p()
+        ans = gp.gp_widget_get_value(widget._w, PTR(value))
+        if getWidgetType(widget) in [GP_WIDGET_MENU, GP_WIDGET_RADIO, GP_WIDGET_TEXT]:
+            value = ctypes.cast(value.value, ctypes.c_char_p)
+        elif getWidgetType(widget) == GP_WIDGET_RANGE:
+            value = ctypes.cast(value.value, ctypes.c_float_p)
+        elif getWidgetType(widget) in [GP_WIDGET_TOGGLE, GP_WIDGET_DATE]:
+            #value = ctypes.cast(value.value, ctypes.c_int_p)
+            pass
+        else:
+            return None
+        return value.value
+
+def printCaptureTarget():
+	main = Widget()
+	check(gp.gp_camera_get_config(camera,PTR(main._w),context))
+	capturetarget = retrieveWidget(main,'capturetarget')
+	print "Widget name: [%s] type: [%s] value: [%s]" % (getWidgetName(capturetarget),getWidgetType(capturetarget),getWidgetValue(capturetarget))
 #
 # init camera
 #
@@ -67,6 +106,12 @@ gp.gp_camera_init(camera, context)
 
 # '/main/capturesettings/aperture'
 
+printCaptureTarget()
+
+setConfig('capturetarget','Memory card')
+
+printCaptureTarget()
+
 setConfig('capturesettings/aperture','18')
 setConfig('capturesettings/shutterspeed','1/250')
 
@@ -74,7 +119,12 @@ setConfig('capturesettings/shutterspeed','1/250')
 ##### 
 #####
 
+cam_path = CameraFilePath()  
+gp.gp_camera_capture(camera,GP_CAPTURE_IMAGE,ctypes.pointer(cam_path),context)
 
+print "CameraPath folder: [%s] name: [%s]" % (str(cam_path.folder),str(cam_path.name))
+
+'''
 #
 # capture image
 #
@@ -101,7 +151,7 @@ gp.gp_camera_file_delete(camera,
                          cam_path.name,  
                          context)  
 gp.gp_file_unref(cam_file) 
-
+'''
 #
 # release
 #

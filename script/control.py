@@ -38,6 +38,8 @@ PTR = ctypes.pointer
 GP_OK = 0
 GP_CAPTURE_IMAGE = 0
 GP_FILE_TYPE_NORMAL = 1
+GP_STORAGE_LOCATION_MEMORY = "Internal RAM"
+GP_STORAGE_LOCATION_CARD = "Memory card"
 
 gp = ctypes.CDLL('/usr/lib/libgphoto2.so.2')
 
@@ -124,24 +126,29 @@ def shoot(gpcontext, location, aperture, shutterspeed, camera,  timestmp, counte
 		microcounter = microcounter + 1
 	
 def captureImage(gpcontext, location, aperture, shutterspeed, camera, timestmp, counter, microcounter):
+	if(location == "memorycard"):
+		setConfig(camera,gpcontext,"capturetarget",GP_STORAGE_LOCATION_CARD)
+	else:
+		setConfig(camera,gpcontext,"capturetarget",GP_STORAGE_LOCATION_MEMORY)
 	setConfig(camera,gpcontext,'capturesettings/aperture',aperture)
 	setConfig(camera,gpcontext,'capturesettings/shutterspeed',shutterspeed)
 	cam_path = CameraFilePath()  
 	gp.gp_camera_capture(camera,GP_CAPTURE_IMAGE,ctypes.pointer(cam_path),gpcontext)
-	cam_file = ctypes.c_void_p()  
-	fd = os.open("{0}/{1}-IMG-{2:03d}-{3:03d}.CR2".format(location,timestmp,counter,microcounter), os.O_CREAT | os.O_WRONLY)  
-	gp.gp_file_new_from_fd(ctypes.pointer(cam_file), fd)  
-	gp.gp_camera_file_get(camera,  
-		              cam_path.folder,  
-		              cam_path.name,  
-		              GP_FILE_TYPE_NORMAL,  
-		              cam_file,  
-		              gpcontext)  
-	gp.gp_camera_file_delete(camera,  
-		                 cam_path.folder,  
-		                 cam_path.name,  
-		                 gpcontext)  
-	gp.gp_file_unref(cam_file)
+	if(location != "memorycard"):
+		cam_file = ctypes.c_void_p()  
+		fd = os.open("{0}/{1}-IMG-{2:03d}-{3:03d}.CR2".format(location,timestmp,counter,microcounter), os.O_CREAT | os.O_WRONLY)  
+		gp.gp_file_new_from_fd(ctypes.pointer(cam_file), fd)  
+		gp.gp_camera_file_get(camera,  
+				      cam_path.folder,  
+				      cam_path.name,  
+				      GP_FILE_TYPE_NORMAL,  
+				      cam_file,  
+				      gpcontext)  
+		gp.gp_camera_file_delete(camera,  
+				         cam_path.folder,  
+				         cam_path.name,  
+				         gpcontext)  
+		gp.gp_file_unref(cam_file)
 
 def initialize(arduino, motorPort, motorSteps, motorStepAngle, motorSpeed, motorAcceleration):
 	request = json.dumps({"command":"initialize","port":motorPort,"total-steps":motorSteps,"step-angle":motorStepAngle,"max-speed":motorSpeed,"acceleration":motorAcceleration})
@@ -263,7 +270,8 @@ def setupArgumentParser():
 	
 	image = parser.add_argument_group("image arguments")
 	
-	image.add_argument("--location",required=True,
+	image.add_argument("--location",required=False,
+		default="memorycard"
 		help = "the location where to store all downladed files")
 
 	image.add_argument("--aperture",required=True,
