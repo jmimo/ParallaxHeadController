@@ -101,7 +101,7 @@ def initializeCamera(gpcontext):
 	return camera
 
 def disconnectCamera(gpcontext,camera):
-	gp.gp_camera_exit(camera, context)  
+	gp.gp_camera_exit(camera, gpcontext)  
 	gp.gp_camera_unref(camera)
 
 def setConfig(camera, gpcontext, name, value):
@@ -271,7 +271,7 @@ def setupArgumentParser():
 	image = parser.add_argument_group("image arguments")
 	
 	image.add_argument("--location",required=False,
-		default="memorycard"
+		default="memorycard",
 		help = "the location where to store all downladed files")
 
 	image.add_argument("--aperture",required=True,
