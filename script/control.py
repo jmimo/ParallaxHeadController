@@ -89,7 +89,7 @@ def check(result):
     return result
 
 def initializeGphotoContext():
-	context = gp.gp-context_new()
+	context = gp.gp_context_new()
 	return context
 
 def initializeCamera(gpcontext):
@@ -110,9 +110,9 @@ def setConfig(camera, gpcontext, name, value):
 	child = None
 	for token in tokens:
 		child = Widget()
-		ret = gp.gp_widget_get_child_by_name(parent._w,str(name),PTR(child._w))
+		ret = gp.gp_widget_get_child_by_name(parent._w,str(token),PTR(child._w))
 		if(ret != 0):
-			check(gp.gp_widget_get_child_by_label(parent._w,str(name),PTR(child._w)))
+			check(gp.gp_widget_get_child_by_label(parent._w,str(token),PTR(child._w)))
 		parent = child
 	child.set_value(value)
 	check(gp.gp_camera_set_config(camera,main._w,gpcontext))

@@ -1,0 +1,1 @@
+./control.py --device /dev/ttyACM0 --direction clockwise --degrees 36 --location ~/Documents/images --aperture 10 --shutterspeed 1/125 --shutterspeed 1/250 --shutterspeed 1/500
